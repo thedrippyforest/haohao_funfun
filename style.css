@@ -246,8 +246,27 @@ button{font:inherit;-webkit-tap-highlight-color:transparent}
   .option{grid-template-columns:38px 1fr 20px;padding:14px}
   .option b{width:34px;height:34px}
 }
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation:none!important;
+    transition:none!important;
+    scroll-behavior:auto!important;
+  }
+
+  /* Important: elements that normally animate from opacity:0
+     must remain visible when iOS Reduce Motion is enabled. */
+  .option,
+  .qcard,
+  .result-card,
+  .transition-inner,
+  .serve-icon span{
+    opacity:1!important;
+    transform:none!important;
+  }
+
+  .option{
+    visibility:visible!important;
+  }
 }
 
 
@@ -378,5 +397,32 @@ button{font:inherit;-webkit-tap-highlight-color:transparent}
     display:flex !important;
     align-items:flex-start;
     padding-top:16px;
+  }
+}
+
+
+/* ===== v11 iOS/Safari visibility fallback ===== */
+.option{
+  opacity:1;
+  transform:none;
+}
+
+/* Animate only on devices that allow motion.
+   This prevents invisible answers on iOS Reduce Motion / Safari edge cases. */
+@media (prefers-reduced-motion: no-preference){
+  .option{
+    animation:optionInSafe .32s ease both;
+    animation-delay:var(--delay,0ms);
+  }
+
+  @keyframes optionInSafe{
+    from{
+      opacity:0;
+      transform:translateY(8px);
+    }
+    to{
+      opacity:1;
+      transform:translateY(0);
+    }
   }
 }
