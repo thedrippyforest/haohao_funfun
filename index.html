@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#E889A0">
+<title>你是什麼菜？｜辦桌料理心理測驗</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app">
+<section id="start" class="screen active">
+  <div class="hero-final-wrap">
+    <img class="hero-final-img" src="assets/hero_final.png" alt="你是什麼菜？辦桌料理心理測驗">
+    <div class="float-dot d1"></div><div class="float-dot d2"></div><div class="float-dot d3"></div>
+    <button class="hero-hit-button pulse" id="startBtn" type="button" aria-label="開始心理測驗"></button>
+  </div>
+</section>
+
+<section id="quiz" class="screen quiz-screen">
+  <div class="floating noodle-a"></div>
+  <div class="floating noodle-b"></div>
+  <div class="quiz-shell">
+    <div class="topbar">
+      <b id="progressText">01 / 06</b>
+      <div class="bar"><i id="barFill"></i></div>
+    </div>
+    <div id="questionWrap"></div>
+  </div>
+</section>
+
+
+<section id="transition" class="screen transition-screen">
+  <div class="transition-inner">
+    <div class="serve-icon" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+    <h2>你的辦桌人格正在上菜…</h2>
+    <p>稍等一下，看看哪道菜最像你 🥢</p>
+  </div>
+</section>
+
+<section id="result" class="screen result-screen">
+  <div class="result-wrap">
+    <div class="tiny-title">你的辦桌人格出爐了 ✦</div>
+    <img id="resultCard" class="result-card pop-in" alt="測驗結果">
+    <p class="save-note">長按上方結果圖卡可儲存至相簿。分享到 Instagram 限動時，記得標記 <b>@howhow_fanfan</b>。</p>
+    <button class="primary" id="shareBtn">分享到 Instagram 限動</button>
+    <button class="secondary" id="retryBtn">再測一次</button>
+  </div>
+</section>
+</main>
+
+<script>
+const questions=[{"q": "辦桌一開席，你最自然會變成哪一種人？", "opts": [["A", "先把氣氛炒熱，讓大家趕快坐下開吃", "lobster"], ["B", "默默確認每個人都有碗筷、飲料和位置", "chicken"], ["C", "跑來跑去找熟人聊天，順手把大家湊成一桌", "rice"]]}, {"q": "朋友臨時說：「今晚聚一下？」你的第一反應是？", "opts": [["A", "可以，但地點和吃什麼我很有想法", "ham"], ["B", "先評估一下今天的社交電量再回覆", "buddha"], ["C", "走啊！臨時約的最好玩", "round"]]}, {"q": "大家卡在「到底吃什麼」時，你通常會？", "opts": [["A", "直接丟三個選項，快速投票決定", "lobster"], ["B", "先顧到每個人的需求，再找最穩妥的選擇", "chicken"], ["C", "問一輪大家想吃什麼，再幫忙統整", "rice"]]}, {"q": "別人最常怎麼形容你？", "opts": [["A", "很有自己的風格，而且反差很大", "ham"], ["B", "看起來安靜，熟了才發現內心戲很多", "buddha"], ["C", "很會找樂子，跟你在一起很輕鬆", "round"]]}, {"q": "如果你是一張餐桌，你最希望桌上發生什麼？", "opts": [["A", "大家笑到隔壁桌都聽得到", "lobster"], ["B", "每個人都吃飽、被照顧到，事情順順的", "chicken"], ["C", "很久沒見的人又重新聊起來", "rice"]]}, {"q": "吃到一道超喜歡的菜，你最可能？", "opts": [["A", "先拍一張漂亮的，再慢慢享受", "ham"], ["B", "開始研究它用了什麼、為什麼這麼好吃", "buddha"], ["C", "立刻想分享給別人，讓大家一起開心", "round"]]}];
+const keys=["lobster","chicken","rice","ham","buddha","round"];
+let idx=0,currentResult=null,scores={};
+const screens=[...document.querySelectorAll('.screen')];
+
+function reset(){
+  scores=Object.fromEntries(keys.map(k=>[k,0]));
+  idx=0;
+}
+function show(id){
+  screens.forEach(s=>s.classList.toggle('active',s.id===id));
+  window.scrollTo({top:0,left:0,behavior:'auto'});
+}
+document.getElementById('startBtn').addEventListener('click',()=>{
+  reset(); show('quiz'); renderQ();
+});
+function renderQ(){
+  const q=questions[idx];
+  document.getElementById('progressText').textContent=String(idx+1).padStart(2,'0')+' / 06';
+  document.getElementById('barFill').style.width=((idx+1)/6*100)+'%';
+  document.getElementById('questionWrap').innerHTML=`
+    <article class="qcard enter">
+      <span class="qnum">QUESTION ${String(idx+1).padStart(2,'0')}</span>
+      <h3>${q.q}</h3>
+      <div class="options">
+        ${q.opts.map((o,i)=>`<button class="option" style="--delay:${i*70}ms" data-key="${o[2]}"><b>${o[0]}</b><span>${o[1]}</span><em>→</em></button>`).join('')}
+      </div>
+    </article>`;
+  document.querySelectorAll('.option').forEach(btn=>btn.addEventListener('click',()=>answer(btn.dataset.key)));
+}
+function answer(k){
+  scores[k]+=1;
+  idx++;
+  const card=document.querySelector('.qcard');
+  card?.classList.add('leave');
+  setTimeout(()=>{
+    if(idx<questions.length) renderQ(); else finish();
+  },220);
+}
+function finish(){
+  const max=Math.max(...Object.values(scores));
+  const tied=keys.filter(k=>scores[k]===max);
+  currentResult=tied[Math.floor(Math.random()*tied.length)];
+
+  // preload result card before transition ends
+  const img=document.getElementById('resultCard');
+  img.src='cards/'+currentResult+'.png';
+
+  show('transition');
+
+  setTimeout(()=>{
+    img.classList.remove('pop-in');
+    void img.offsetWidth;
+    img.classList.add('pop-in');
+    show('result');
+  },950);
+}
+document.getElementById('retryBtn').addEventListener('click',()=>show('start'));
+document.getElementById('shareBtn').addEventListener('click',async()=>{
+  const url='cards/'+currentResult+'.png';
+  try{
+    const res=await fetch(url);
+    const blob=await res.blob();
+    const file=new File([blob],'howhow-'+currentResult+'.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],text:'我的辦桌人格出爐啦！ @howhow_fanfan'});
+    }else{
+      const a=document.createElement('a');
+      a.href=url;a.download=file.name;a.click();
+    }
+  }catch(e){ window.open(url,'_blank'); }
+});
+</script>
+</body>
+</html>
